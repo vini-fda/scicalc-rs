@@ -3,12 +3,14 @@ use std::ops::{Add, Sub, Mul, Div};
 use float_cmp::{ApproxEq, F64Margin};
 
 /**A Measurement 'x' is written as x = (mean +- sigma)
+
 where 'mean' is the mean value
-and 'sigma' is the error, or the standard deviation from the mean*/
+
+and 'sigma' is the uncertainty(also called error or standard deviation from the mean)*/
 #[derive(Debug, Clone, Copy)]
 pub struct Measurement {
     mean: f64, //mean value
-    sigma: f64 //std deviation or error
+    sigma: f64 //std deviation, error or uncertainty
 }
 
 impl Measurement {
@@ -69,6 +71,13 @@ impl Div for Measurement {
 impl fmt::Display for Measurement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ± {}", self.mean, self.sigma)
+    }
+}
+
+impl PartialEq for Measurement {
+    fn eq(&self, other: &Self) -> bool {
+        self.mean == other.mean 
+        && self.sigma == other.sigma
     }
 }
 
