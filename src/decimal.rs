@@ -24,7 +24,7 @@ impl DecimalNumber {
         }
     }
     pub fn full_number(&self) -> String {
-        format!("{}{}", self.integral, self.fractional)
+        format!("{}.{}", self.integral, self.fractional)
     }
 }
 
