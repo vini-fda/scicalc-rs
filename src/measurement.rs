@@ -2,11 +2,13 @@ use std::fmt;
 use std::ops::{Add, Sub, Mul, Div};
 use float_cmp::{ApproxEq, F64Margin};
 
-
+/**A Measurement 'x' is written as x = (mean +- sigma)
+where 'mean' is the mean value
+and 'sigma' is the error, or the standard deviation from the mean*/
 #[derive(Debug, Clone, Copy)]
 pub struct Measurement {
-    mean: f64,
-    sigma: f64
+    mean: f64, //mean value
+    sigma: f64 //std deviation or error
 }
 
 impl Measurement {
@@ -111,7 +113,7 @@ mod tests {
         let y = Measurement::new(1.0, 0.001);
         let x_prime = Measurement::new(1.0, 2.0 * 0.005);
 
-        //A number is equal to itself. Therefore it's approximately equal to itself
+        //A number is equal to itself. Therefore it's also approximately equal to itself
         assert!(x.approx_eq(x, F64Margin::default()));
         //x and y should NOT be approximately equal
         assert_eq!(false, x.approx_eq(y, F64Margin::default()));

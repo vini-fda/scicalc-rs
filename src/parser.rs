@@ -10,8 +10,10 @@ fn is_num(text: &str) -> bool {
 }
 
 fn is_measurement(text: &str) -> bool {
+    //Checks for measurements of type (x +- y), where x and y are numeric literals(e.g. 2.33)
+    //Examples are given in the 'tests' section
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"(\d+)(\.\d+)?|(\.\d+)").unwrap();
+        static ref RE: Regex = Regex::new(r"((\-?)(\d+)(\.\d+)?|(\-?)(\.\d+))\s*\+\-\s*((\d+)(\.\d+)?|(\.\d+))").unwrap();
     }
     RE.is_match(&text)
 }
@@ -19,6 +21,9 @@ fn is_measurement(text: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    //---------------------
+    //Test numeric literal parsing
+    //---------------------
     #[test]
     fn negative_float() {
         assert!(is_num("-23.333"));
@@ -49,8 +54,31 @@ mod tests {
         assert!(is_num("-.333"));
         assert!(is_num("-.07"));
     }
+
+    //---------------------
+    //Test measurement parsing
+    //---------------------
+    #[test]
+    fn basic_measurement() {
+        assert!(is_measurement("23.333 +- 2.0"));
+        assert!(is_measurement("23.333 +-2.0"));
+        assert!(is_measurement("23.333+- 2.0"));
+        assert!(is_measurement("23.333+-2.0"));
+    }
+    #[test]
+    fn negative_sigma_disallowed() {
+        //Negative error/sigma should NOT be parsed
+        assert!(!is_measurement("23.333 +- -2.0"));
+        assert!(!is_measurement("23.333 +--2.0"));
+        assert!(!is_measurement("23.333+--2.0"));
+        assert!(!is_measurement("23.333+- -2.0"));
+    }
+    #[test]
+    fn negative_mean_measurement() {
+        //Negative mean is perfectly OK
+        assert!(is_measurement("-23.333 +- 2.0"));
+        assert!(is_measurement("-23.333 +-2.0"));
+        assert!(is_measurement("-23.333+- 2.0"));
+        assert!(is_measurement("-23.333+-2.0"));
+    }
 }
-
-// fn parse_num(text: String) -> Option<Measurement> {
-
-// }
