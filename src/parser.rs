@@ -43,7 +43,7 @@ fn parse_measurement(text: &str) -> Result<Measurement, &str> {
         //given the value of 0.0 (in the example, '70.5 +- 0.0')
         let sigma: f64 = match captures.name("sigma") {
             Some(text) => text.as_str().parse::<f64>().unwrap(),
-            None => 3.0
+            None => 0.0
         };
 
         Ok(Measurement::new(mean, sigma))
