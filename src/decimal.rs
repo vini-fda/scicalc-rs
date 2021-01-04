@@ -34,7 +34,6 @@ fn sig_figs(number: &str) -> usize {
 }
 
 fn sig_figs_helper(x: DecimalNumber) -> usize {
-    let full_number = x.full_number();
     let mut start_count = false;
     let mut counter: usize = 0;
     let mut backtracking = false;
