@@ -33,6 +33,8 @@ fn sig_figs(number: &str) -> usize {
     sig_figs_helper(d)
 }
 
+///Does the character-by-character counting
+///for the amount of significant figures in a decimal number
 fn sig_figs_helper(x: DecimalNumber) -> usize {
     let mut start_count = false;
     let mut counter: usize = 0;
