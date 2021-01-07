@@ -60,7 +60,8 @@ fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> S {
         let op = match token {
             Token::Eof => break,
             Token::Add | Token::Minus | Token::Mul | Token::Div |
-            Token::LeftParen | Token::RightParen | Token::PlusMinus => token,
+            Token::RightParen | Token::PlusMinus => token,
+            Token::LeftParen => panic!("Excess left parenthesis \'(\'"),
             t => panic!("bad token(rhs): {:?}", t),
         };
         if let Some((l_bp, r_bp)) = infix_binding_power(&op) {
@@ -73,6 +74,7 @@ fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> S {
     
             lhs = S::Group(op, vec![lhs, rhs]);
         } else {
+            //Stop parsing
             break;
         }
     }
@@ -264,5 +266,15 @@ mod tests {
             },
             _ => panic!("Error")
         }
+    }
+    #[test]
+    fn test_valid_parenthesis() {
+        let s = expr("(-1.0) ± 2.0");
+        assert_eq!(s.to_string(), "(± (- 1.0) 2.0)")
+    }
+    #[test]
+    #[should_panic]
+    fn test_wrong_parenthesis() {
+        expr("-1.0 (± 2.0");
     }
 }
