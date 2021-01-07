@@ -5,13 +5,13 @@ Rust crate for parsing and doing calculations with measurements, typically used 
 
 # TODO
 
-## Lexing
+## Lexing [OK]
 Transform a string(i.e. the input as a sequence of characters) into a sequence of *tokens*, which can then be fed into the *parser*.
 
-## Parsing
+## Parsing [WIP]
 Read a sequence of tokens — which has a linear structure — and transform it into a **tree** structure.
 
-## Evaluating
+## Evaluating [WIP]
 Read the tree structure of the expression and *fold* it, reducing it into it's final value.
 
 ## Calculator
