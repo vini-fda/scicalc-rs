@@ -1,164 +1,123 @@
-use crate::measurement::Measurement;
-use lazy_static::lazy_static;
-use regex::Regex;
+use std::fmt;
+use crate::lexer::Lexer;
+use crate::token::Token;
 
-fn is_num(text: &str) -> bool {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"(\-?)(\d+)(\.\d+)?|(\.\d+)").unwrap();
-    }
-    RE.is_match(&text)
+///An expression, stored as a tree structure
+///
+///Look into "S-expressions" to learn more
+///
+///Reference: https://en.wikipedia.org/wiki/S-expression
+enum S {
+    Atom(Token), //A single token
+    Group(Token, Vec<S>) //An operator and a list of tokens
 }
 
-///Checks for measurements of the following types:
-///
-/// (x +- y), (x ± y), (x)
-///
-///where x and y are numeric literals(e.g. 2.33, 5, .67)
-///
-///Note that 'y' cannot be a negative number, whereas x can
-///
-///(so '-2.33 ± 2.0' is valid, but '2.0 ± -1.0' is not)
-fn is_measurement(text: &str) -> bool {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?P<mean>(\-?)(\d+)(\.\d+)?|(\-?)(\.\d+))\s*(\+\-|±)\s*(?P<sigma>(\d+)(\.\d+)?|(\.\d+))").unwrap();
+
+impl fmt::Display for S {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            S::Atom(i) => write!(f, "{}", i),
+            S::Group(head, rest) => {
+                write!(f, "({}", head)?;
+                for s in rest {
+                    write!(f, " {}", s)?
+                }
+                write!(f, ")")
+            }
+        }
     }
-    RE.is_match(&text)
 }
 
-fn parse_measurement(text: &str) -> Result<Measurement, &str> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?P<mean>(\-?)(\d+)(\.\d+)?|(\-?)(\.\d+))(\s*(\+\-|±)\s*(?P<sigma>(\d+)(\.\d+)?|(\.\d+)))?").unwrap();
-    }
-    if !RE.is_match(&text) {
-        Err("The string does not contain a measurement literal. Maybe there was a syntax error?")
-    } else {
-        //Get all capture groups from the string with the given regular expression
-        let captures = RE.captures(text).unwrap();
-        //mean is required
-        let mean: &str = captures.name("mean").unwrap().as_str();
-        let mean: f64 = mean.parse::<f64>().unwrap();
-        //sigma is optional
-        //when a number is given without sigma(e.g. '70.5'), sigma is implicitly
-        //given the value of 0.0 (in the example, '70.5 +- 0.0')
-        let sigma: f64 = match captures.name("sigma") {
-            Some(text) => text.as_str().parse::<f64>().unwrap(),
-            None => 0.0,
+fn expr(text: &str) -> S {
+    let mut lexer = Lexer::new(text);
+    expr_bp(&mut lexer, 0)
+}
+
+///Parses the expressions using Pratt's method(TDOP).
+fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> S {
+    let first_token = lexer.next();
+    let mut lhs = match first_token {
+        Token::PosNum(_) | Token::EulersNum | Token::Pi => {
+            S::Atom(first_token)
+        },
+        Token::LeftParen => {
+            let lhs = expr_bp(lexer, 0);
+            assert_eq!(lexer.next(), Token::RightParen);
+            lhs
+        },
+        Token::Minus => {
+            let ((), r_bp) = prefix_binding_power(&first_token);
+            let rhs = expr_bp(lexer, r_bp);
+            S::Group(first_token, vec![rhs])
+        },
+        t => panic!("bad token(lhs): {:?}", t),
+    };
+    
+    loop {
+        let token = lexer.peek();
+        let op = match token {
+            Token::Eof => break,
+            Token::Add | Token::Minus | Token::Mul | Token::Div |
+            Token::LeftParen | Token::RightParen | Token::PlusMinus => token,
+            t => panic!("bad token(rhs): {:?}", t),
         };
-
-        Ok(Measurement::new(mean, sigma))
+        if let Some((l_bp, r_bp)) = infix_binding_power(&op) {
+            if l_bp < min_bp {
+                break;
+            }
+    
+            lexer.next();
+            let rhs = expr_bp(lexer, r_bp);
+    
+            lhs = S::Group(op, vec![lhs, rhs]);
+        } else {
+            break;
+        }
     }
+
+    lhs
+}
+
+fn prefix_binding_power(op: &Token) -> ((), u8) { 
+    match op {
+        Token::Minus => ((), 9),
+        _ => panic!("bad operator: {:?} (is not a prefix operator)", op),
+    }
+}
+
+///Optionally returns the binding power of an infix operator.
+///
+///This is at the core of Pratt's method for parsing, because
+///it totally orders the precedence of each operator.
+///
+///If the operator is not valid, returns None.
+fn infix_binding_power(op: &Token) -> Option<(u8, u8)> {
+    let res = match op {
+        Token::Add | Token::Minus => (1, 2),
+        Token::Mul | Token::Div => (3, 4),
+        Token::PlusMinus => (7,8),
+        _ => return None,
+    };
+    Some(res)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    //---------------------
-    //Test numeric literal parsing
-    //---------------------
     #[test]
-    fn negative_float() {
-        assert!(is_num("-23.333"));
+    fn tests() {
+        let s = expr("1 + 2 * 3");
+        assert_eq!(s.to_string(), "(+ 1 (* 2 3))");
+        let s = expr("--1 * 2");
+        assert_eq!(s.to_string(), "(* (- (- 1)) 2)");
+        let s = expr("(((0)))");
+        assert_eq!(s.to_string(), "0");
+        let s = expr("1 ± 2 * 3");
+        assert_eq!(s.to_string(), "(* (± 1 2) 3)");
     }
     #[test]
-    fn simple_float() {
-        assert!(is_num("23.333"));
-    }
-    #[test]
-    fn integers() {
-        assert!(is_num("23"));
-        assert!(is_num("0"));
-        assert!(is_num("8921801298"));
-    }
-    #[test]
-    fn negative_integers() {
-        assert!(is_num("-23"));
-        assert!(is_num("-0"));
-        assert!(is_num("-8921801298"));
-    }
-    #[test]
-    fn period_floats() {
-        assert!(is_num(".333"));
-        assert!(is_num(".07"));
-    }
-    #[test]
-    fn negative_period_floats() {
-        assert!(is_num("-.333"));
-        assert!(is_num("-.07"));
-    }
-
-    //---------------------
-    //Test measurement parsing
-    //---------------------
-    #[test]
-    fn basic_measurement() {
-        assert!(is_measurement("23.333 +- 2.0"));
-        assert!(is_measurement("23.333 +-2.0"));
-        assert!(is_measurement("23.333+- 2.0"));
-        assert!(is_measurement("23.333+-2.0"));
-    }
-    #[test]
-    fn negative_sigma_disallowed() {
-        //Negative error/sigma should NOT be parsed
-        assert!(!is_measurement("23.333 +- -2.0"));
-        assert!(!is_measurement("23.333 +--2.0"));
-        assert!(!is_measurement("23.333+--2.0"));
-        assert!(!is_measurement("23.333+- -2.0"));
-    }
-    #[test]
-    fn negative_mean_measurement() {
-        //Negative mean is perfectly OK
-        assert!(is_measurement("-23.333 +- 2.0"));
-        assert!(is_measurement("-23.333 +-2.0"));
-        assert!(is_measurement("-23.333+- 2.0"));
-        assert!(is_measurement("-23.333+-2.0"));
-    }
-    #[test]
-    fn unicode_plus_minus_measurement() {
-        assert!(is_measurement("23.333 ± 2.0"));
-        assert!(is_measurement("23.333 ±2.0"));
-        assert!(is_measurement("23.333± 2.0"));
-        assert!(is_measurement("23.333±2.0"));
-    }
-
-    #[test]
-    fn unicode_plus_minus_disallow_negative_uncertainty_measurement() {
-        //Negative error/sigma should NOT be parsed
-        //even with unicode ±
-        assert!(!is_measurement("23.333 ± -2.0"));
-        assert!(!is_measurement("23.333 ±-2.0"));
-        assert!(!is_measurement("23.333± -2.0"));
-        assert!(!is_measurement("23.333±-2.0"));
-    }
-
-    //Test parsing
-    #[test]
-    fn parse_simple_measurement() {
-        let parse_result = parse_measurement("1.0 +- 0.01");
-        let parse_result = match parse_result {
-            Ok(result) => result,
-            Err(error_msg) => panic!("Error when parsing the number! {}", error_msg),
-        };
-        let actual_value = Measurement::new(1.0, 0.01);
-        assert_eq!(actual_value, parse_result);
-    }
-    #[test]
-    fn parse_negative_measurement() {
-        let parse_result = parse_measurement("-3.33 +- 0.01");
-        let parse_result = match parse_result {
-            Ok(result) => result,
-            Err(error_msg) => panic!("Error when parsing the number! {}", error_msg),
-        };
-        let actual_value = Measurement::new(-3.33, 0.01);
-        assert_eq!(actual_value, parse_result);
-    }
-    #[test]
-    fn parse_measurement_without_sigma() {
-        let parse_result = parse_measurement("70.5");
-        let parse_result = match parse_result {
-            Ok(result) => result,
-            Err(error_msg) => panic!("Error when parsing the number! {}", error_msg),
-        };
-        let actual_value = Measurement::new(70.5, 0.0);
-        assert_eq!(actual_value, parse_result);
+    fn test_negative() {
+        let s = expr("-1.0 ± 2.0");
+        assert_eq!(s.to_string(), "(± (- 1.0) 2.0)");
     }
 }
