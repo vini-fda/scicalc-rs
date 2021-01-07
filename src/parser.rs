@@ -1,5 +1,5 @@
-use lazy_static::lazy_static;
 use crate::measurement::Measurement;
+use lazy_static::lazy_static;
 use regex::Regex;
 
 fn is_num(text: &str) -> bool {
@@ -19,7 +19,6 @@ fn is_num(text: &str) -> bool {
 ///
 ///(so '-2.33 ± 2.0' is valid, but '2.0 ± -1.0' is not)
 fn is_measurement(text: &str) -> bool {
-
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(?P<mean>(\-?)(\d+)(\.\d+)?|(\-?)(\.\d+))\s*(\+\-|±)\s*(?P<sigma>(\d+)(\.\d+)?|(\.\d+))").unwrap();
     }
@@ -43,7 +42,7 @@ fn parse_measurement(text: &str) -> Result<Measurement, &str> {
         //given the value of 0.0 (in the example, '70.5 +- 0.0')
         let sigma: f64 = match captures.name("sigma") {
             Some(text) => text.as_str().parse::<f64>().unwrap(),
-            None => 0.0
+            None => 0.0,
         };
 
         Ok(Measurement::new(mean, sigma))
@@ -137,7 +136,7 @@ mod tests {
         let parse_result = parse_measurement("1.0 +- 0.01");
         let parse_result = match parse_result {
             Ok(result) => result,
-            Err(error_msg) => panic!("Error when parsing the number! {}", error_msg)
+            Err(error_msg) => panic!("Error when parsing the number! {}", error_msg),
         };
         let actual_value = Measurement::new(1.0, 0.01);
         assert_eq!(actual_value, parse_result);
@@ -147,7 +146,7 @@ mod tests {
         let parse_result = parse_measurement("-3.33 +- 0.01");
         let parse_result = match parse_result {
             Ok(result) => result,
-            Err(error_msg) => panic!("Error when parsing the number! {}", error_msg)
+            Err(error_msg) => panic!("Error when parsing the number! {}", error_msg),
         };
         let actual_value = Measurement::new(-3.33, 0.01);
         assert_eq!(actual_value, parse_result);
@@ -157,10 +156,9 @@ mod tests {
         let parse_result = parse_measurement("70.5");
         let parse_result = match parse_result {
             Ok(result) => result,
-            Err(error_msg) => panic!("Error when parsing the number! {}", error_msg)
+            Err(error_msg) => panic!("Error when parsing the number! {}", error_msg),
         };
         let actual_value = Measurement::new(70.5, 0.0);
         assert_eq!(actual_value, parse_result);
     }
-
 }

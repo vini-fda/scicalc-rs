@@ -1,24 +1,23 @@
-use crate::measurement::Measurement;
 use crate::decimal::DecimalNumber;
+use crate::measurement::Measurement;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     PosNum(DecimalNumber), //Positive number literal
-    Msmnt(Measurement), //Measurement literal
+    Msmnt(Measurement),    //Measurement literal
 
     //Constants
     EulersNum, //Euler's number
-    Pi, //pi
+    Pi,        //pi
 
     //Operators
-    Add, //'+'
+    Add,   //'+'
     Minus, //'-'  NOTE: could be prefix 'minus' or the infix subtraction operator
-    Mul, //'*'
-    Div, //'/'
-
+    Mul,   //'*'
+    Div,   //'/'
 
     //Grouping
-    LeftParen, // '('
+    LeftParen,  // '('
     RightParen, // ')'
 
     //End-of-file

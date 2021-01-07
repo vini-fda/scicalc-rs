@@ -1,10 +1,10 @@
-use std::{iter::Peekable, str::Chars};
 use crate::decimal::DecimalNumber;
+use std::{iter::Peekable, str::Chars};
 
 use crate::token::Token;
 
 struct Scanner<'a> {
-    characters: Peekable<Chars<'a>>
+    characters: Peekable<Chars<'a>>,
 }
 
 impl<'a> Scanner<'_> {
@@ -26,7 +26,7 @@ impl<'a> Scanner<'_> {
     }
 }
 struct Lexer {
-    tokens: Vec<Token>
+    tokens: Vec<Token>,
 }
 
 impl Lexer {
@@ -42,10 +42,10 @@ impl Lexer {
                 Some(val) => {
                     c = val;
                     scanner.next();
-                },
+                }
                 None => {
                     tokens.push(Token::Eof); //EOF - termination point
-                    break
+                    break;
                 }
             };
 
@@ -58,18 +58,17 @@ impl Lexer {
                 'π' => Some(Token::Pi),
                 '(' => Some(Token::LeftParen),
                 ')' => Some(Token::RightParen),
-                '0' ..= '9' => Some(Lexer::ParseNumber(c, false, &mut scanner)),
-                '.' => Some(Lexer::ParseNumber(c, true, &mut scanner)),
+                '0'..='9' => Some(Lexer::parse_number(c, false, &mut scanner)),
+                '.' => Some(Lexer::parse_number(c, true, &mut scanner)),
                 ' ' | '\t' | '\n' => continue, //whitespace
-                _ => panic!("Unexpected character: \'{}\'", c)
+                _ => panic!("Unexpected character: \'{}\'", c),
             };
             match opt_token {
                 Some(t) => tokens.push(t),
                 None => {}
             }
-            
         }
-        
+
         tokens.reverse();
 
         Lexer { tokens }
@@ -79,16 +78,15 @@ impl Lexer {
         self.tokens.pop().unwrap_or(Token::Eof)
     }
 
-    fn ParseNumber(init_c: char, mut foundPeriod: bool, scanner: &mut Scanner) -> Token {
+    fn parse_number(init_c: char, mut found_period: bool, scanner: &mut Scanner) -> Token {
         let mut number_str = String::from("");
         let mut opt_c: Option<char>;
         let mut c: char;
-        //let mut foundPeriod = false;
 
         //Add the initial digit (as a character) to the string
         number_str.push(init_c);
-        
-        //Incrementally read and build the numeric string 
+
+        //Incrementally read and build the numeric string
         //as long as there are valid characters
         loop {
             opt_c = scanner.peek();
@@ -96,24 +94,24 @@ impl Lexer {
             match opt_c {
                 Some(val) => {
                     c = val;
-                },
-                None => break //STOP: reached EOF
+                }
+                None => break, //STOP: reached EOF
             };
 
             match c {
-                '0' ..= '9' => {
+                '0'..='9' => {
                     number_str.push(c);
-                },
+                }
                 '.' => {
-                    if foundPeriod {
+                    if found_period {
                         //STOP
                         break;
                     } else {
-                        foundPeriod = true;
+                        found_period = true;
                         number_str.push(c);
                     }
                 }
-                _ => break //STOP
+                _ => break, //STOP
             }
 
             scanner.next();
@@ -124,15 +122,14 @@ impl Lexer {
                 if val == '.' {
                     panic!("Error: numeric literal cannot end in a period. Problematic literal: \"{}\"", number_str);
                 }
-            },
-            None => ()
+            }
+            None => (),
         };
         let number = DecimalNumber::new(number_str.as_str());
 
         Token::PosNum(number)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -143,7 +140,7 @@ mod tests {
         let x = DecimalNumber::new(_x);
         let y = match _y {
             Token::PosNum(val) => val,
-            _ => DecimalNumber::new("0")
+            _ => DecimalNumber::new("0"),
         };
 
         assert_eq!(x, y)

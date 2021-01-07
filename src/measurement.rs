@@ -1,6 +1,6 @@
-use std::fmt;
-use std::ops::{Add, Sub, Mul, Div};
 use float_cmp::{ApproxEq, F64Margin};
+use std::fmt;
+use std::ops::{Add, Div, Mul, Sub};
 
 /**A Measurement 'x' is written as x = (mean +- sigma)
 
@@ -9,16 +9,13 @@ where 'mean' is the mean value
 and 'sigma' is the uncertainty(also called error or standard deviation from the mean)*/
 #[derive(Debug, Clone, Copy)]
 pub struct Measurement {
-    mean: f64, //mean value
-    sigma: f64 //std deviation, error or uncertainty
+    mean: f64,  //mean value
+    sigma: f64, //std deviation, error or uncertainty
 }
 
 impl Measurement {
     pub fn new(mean: f64, sigma: f64) -> Measurement {
-        Measurement {
-            mean,
-            sigma
-        }
+        Measurement { mean, sigma }
     }
 }
 
@@ -28,7 +25,7 @@ impl Add for Measurement {
     fn add(self, other: Self) -> Self {
         Self {
             mean: self.mean + other.mean,
-            sigma: quadrature(self.sigma, other.sigma).sqrt()
+            sigma: quadrature(self.sigma, other.sigma).sqrt(),
         }
     }
 }
@@ -39,7 +36,7 @@ impl Sub for Measurement {
     fn sub(self, other: Self) -> Self {
         Self {
             mean: self.mean - other.mean,
-            sigma: quadrature(self.sigma, other.sigma).sqrt()
+            sigma: quadrature(self.sigma, other.sigma).sqrt(),
         }
     }
 }
@@ -51,7 +48,7 @@ impl Mul for Measurement {
         let new_mean = self.mean * other.mean;
         Self {
             mean: new_mean,
-            sigma: quadrature(self.sigma/self.mean, other.sigma/other.mean).sqrt() * new_mean
+            sigma: quadrature(self.sigma / self.mean, other.sigma / other.mean).sqrt() * new_mean,
         }
     }
 }
@@ -63,7 +60,7 @@ impl Div for Measurement {
         let new_mean = self.mean / other.mean;
         Self {
             mean: new_mean,
-            sigma: quadrature(self.sigma/self.mean, other.sigma/other.mean).sqrt() * new_mean
+            sigma: quadrature(self.sigma / self.mean, other.sigma / other.mean).sqrt() * new_mean,
         }
     }
 }
@@ -76,8 +73,7 @@ impl fmt::Display for Measurement {
 
 impl PartialEq for Measurement {
     fn eq(&self, other: &Self) -> bool {
-        self.mean == other.mean 
-        && self.sigma == other.sigma
+        self.mean == other.mean && self.sigma == other.sigma
     }
 }
 
@@ -86,15 +82,13 @@ impl ApproxEq for Measurement {
 
     fn approx_eq<T: Into<Self::Margin>>(self, other: Self, margin: T) -> bool {
         let margin = margin.into();
-        self.mean.approx_eq(other.mean, margin)
-        && self.sigma.approx_eq(other.sigma, margin)
+        self.mean.approx_eq(other.mean, margin) && self.sigma.approx_eq(other.sigma, margin)
     }
 }
 
-fn quadrature(x: f64, y:f64) -> f64 {
-    x*x + y*y
+fn quadrature(x: f64, y: f64) -> f64 {
+    x * x + y * y
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -106,14 +100,13 @@ mod tests {
 
         let added = Measurement::new(3.0, 0.0002f64.sqrt());
         let subtracted = Measurement::new(-1.0, 0.0002f64.sqrt());
-        let multiplied = Measurement::new(2.0, 2.0*(quadrature(0.01/1.0, 0.01/2.0)).sqrt());
-        let divided = Measurement::new(0.5, 0.5*(quadrature(0.01/1.0, 0.01/2.0)).sqrt());
+        let multiplied = Measurement::new(2.0, 2.0 * (quadrature(0.01 / 1.0, 0.01 / 2.0)).sqrt());
+        let divided = Measurement::new(0.5, 0.5 * (quadrature(0.01 / 1.0, 0.01 / 2.0)).sqrt());
 
-        
-        assert!(added.approx_eq(x+y, F64Margin::default()));
-        assert!(subtracted.approx_eq(x-y, F64Margin::default()));
-        assert!(multiplied.approx_eq(x*y, F64Margin::default()));
-        assert!(divided.approx_eq(x/y, F64Margin::default()));
+        assert!(added.approx_eq(x + y, F64Margin::default()));
+        assert!(subtracted.approx_eq(x - y, F64Margin::default()));
+        assert!(multiplied.approx_eq(x * y, F64Margin::default()));
+        assert!(divided.approx_eq(x / y, F64Margin::default()));
     }
     #[test]
     fn approximate_equality() {
