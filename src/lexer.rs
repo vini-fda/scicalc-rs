@@ -19,18 +19,15 @@ impl<'a> Scanner<'_> {
     }
 
     fn peek(&mut self) -> Option<char> {
-        match self.characters.peek() {
-            Some(value) => Some(*value),
-            None => None,
-        }
+        self.characters.peek().copied()
     }
 }
-struct Lexer {
+pub struct Lexer {
     tokens: Vec<Token>,
 }
 
 impl Lexer {
-    fn new(input: &str) -> Lexer {
+    pub fn new(input: &str) -> Lexer {
         let mut scanner = Scanner::new(input);
         let mut opt_c: Option<char>;
         let mut c: char;
@@ -54,6 +51,7 @@ impl Lexer {
                 '-' => Some(Token::Minus),
                 '*' => Some(Token::Mul),
                 '/' => Some(Token::Div),
+                '±' => Some(Token::PlusMinus),
                 'e' => Some(Token::EulersNum),
                 'π' => Some(Token::Pi),
                 '(' => Some(Token::LeftParen),
@@ -74,8 +72,12 @@ impl Lexer {
         Lexer { tokens }
     }
 
-    fn next(&mut self) -> Token {
+    pub fn next(&mut self) -> Token {
         self.tokens.pop().unwrap_or(Token::Eof)
+    }
+
+    pub fn peek(&mut self) -> Token {
+        self.tokens.last().cloned().unwrap_or(Token::Eof)
     }
 
     fn parse_number(init_c: char, mut found_period: bool, scanner: &mut Scanner) -> Token {
@@ -150,6 +152,7 @@ mod tests {
         let mut lex = Lexer::new("12");
         let token = lex.next();
         num_eq("12", token);
+        assert_eq!(Token::Eof, lex.next());
     }
 
     #[test]
@@ -158,6 +161,15 @@ mod tests {
         num_eq("2", lex.next());
         assert_eq!(Token::Add, lex.next());
         num_eq("3", lex.next());
+        assert_eq!(Token::Eof, lex.next());
+    }
+    #[test]
+    fn test_simple_plus_minus() {
+        let mut lex = Lexer::new("2.3 ± 3.3");
+        num_eq("2.3", lex.next());
+        assert_eq!(Token::PlusMinus, lex.next());
+        num_eq("3.3", lex.next());
+        assert_eq!(Token::Eof, lex.next());
     }
 
     #[test]
@@ -170,23 +182,27 @@ mod tests {
         assert_eq!(Token::RightParen, lex.next());
         assert_eq!(Token::Minus, lex.next());
         num_eq("5", lex.next());
+        assert_eq!(Token::Eof, lex.next());
     }
 
     #[test]
     fn test_float_1() {
         let mut lex = Lexer::new("13.095");
         num_eq("13.095", lex.next());
+        assert_eq!(Token::Eof, lex.next());
     }
 
     #[test]
     fn test_float_2() {
         let mut lex = Lexer::new("0.095");
         num_eq("0.095", lex.next());
+        assert_eq!(Token::Eof, lex.next());
     }
     #[test]
     fn test_float_3() {
         let mut lex = Lexer::new(".095");
         num_eq("0.095", lex.next());
+        assert_eq!(Token::Eof, lex.next());
     }
 
     #[test]
@@ -210,11 +226,19 @@ mod tests {
     fn test_eulers_num() {
         let mut lex = Lexer::new("e");
         assert_eq!(Token::EulersNum, lex.next());
+        assert_eq!(Token::Eof, lex.next());
     }
 
     #[test]
     fn test_pi() {
         let mut lex = Lexer::new("π");
         assert_eq!(Token::Pi, lex.next());
+        assert_eq!(Token::Eof, lex.next());
+    }
+
+    #[test]
+    fn test_eof() {
+        let mut lex = Lexer::new("");
+        assert_eq!(Token::Eof, lex.next());
     }
 }
