@@ -3,7 +3,8 @@
 ///
 ///For example: 3.14159265 has 
 ///integral = '3' and fractional = '14159265'
-struct DecimalNumber {
+#[derive(Debug, Clone, PartialEq)]
+pub struct DecimalNumber {
     integral: String,
     fractional: String
 }
@@ -18,7 +19,10 @@ impl DecimalNumber {
             }
         } else {
             DecimalNumber {
-                integral: parts[0].into(),
+                integral: match parts[0] {
+                    "" => "0",
+                    p => p
+                }.into(),
                 fractional: parts[1].into()
             }
         }
@@ -27,6 +31,7 @@ impl DecimalNumber {
         format!("{}.{}", self.integral, self.fractional)
     }
 }
+
 
 fn sig_figs(number: &str) -> usize {
     let d = DecimalNumber::new(number);
