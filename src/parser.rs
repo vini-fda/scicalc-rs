@@ -1,12 +1,14 @@
 use std::fmt;
-use crate::lexer::Lexer;
+use crate::{lexer::Lexer, measurement::Measurement, value::Value};
 use crate::token::Token;
+use std::panic;
 
 ///An expression, stored as a tree structure
 ///
 ///Look into "S-expressions" to learn more
 ///
 ///Reference: https://en.wikipedia.org/wiki/S-expression
+#[derive(Debug)]
 enum S {
     Atom(Token), //A single token
     Group(Token, Vec<S>) //An operator and a list of tokens
@@ -101,6 +103,86 @@ fn infix_binding_power(op: &Token) -> Option<(u8, u8)> {
     Some(res)
 }
 
+
+fn eval_expr(expression: &S) -> Value {
+    match expression {
+        S::Atom(token) => {
+            match token {
+                Token::PosNum(x) => Value::PosNumber(x.as_float()),
+                Token::EulersNum => Value::Number(std::f64::consts::E),
+                Token::Pi => Value::Number(std::f64::consts::PI),
+                _ => panic!("bad token(eval atom): {:?}", token)
+            }
+        },
+        S::Group(op, sub_expressions) => {
+            match op {
+                Token::Add => {
+                    if sub_expressions.len() != 2 {
+                        panic!("bad sub-expressions: {:?}, addition ('+') operator is binary.", sub_expressions)
+                    } else {
+                        let lhs = eval_expr(&sub_expressions[0]);
+                        let rhs = eval_expr(&sub_expressions[1]);
+                        lhs + rhs
+                    }
+                },
+                Token::Minus => {
+                    if sub_expressions.len() == 1 {
+                        //Unary minus operator
+                        - eval_expr(&sub_expressions[0])
+                    } else if sub_expressions.len() != 2 {
+                        panic!("bad sub-expressions: {:?}, subtraction ('-') operator is binary.", sub_expressions)
+                    } else {
+                        let lhs = eval_expr(&sub_expressions[0]);
+                        let rhs = eval_expr(&sub_expressions[1]);
+                        lhs - rhs
+                    }
+                },
+                Token::Mul => {
+                    if sub_expressions.len() != 2 {
+                        panic!("bad sub-expressions: {:?}, multiplication ('*') operator is binary.", sub_expressions)
+                    } else {
+                        let lhs = eval_expr(&sub_expressions[0]);
+                        let rhs = eval_expr(&sub_expressions[1]);
+                        lhs * rhs
+                    }
+                },
+                Token::Div => {
+                    if sub_expressions.len() != 2 {
+                        panic!("bad sub-expressions: {:?}, division ('/') operator is binary.", sub_expressions)
+                    } else {
+                        let lhs = eval_expr(&sub_expressions[0]);
+                        let rhs = eval_expr(&sub_expressions[1]);
+                        lhs / rhs
+                    }
+                },
+                Token::PlusMinus => {
+                    if sub_expressions.len() != 2 {
+                        panic!("bad sub-expressions: {:?}, plus-minus ('±') operator is binary.", sub_expressions)
+                    } else {
+                        let lhs = eval_expr(&sub_expressions[0]);
+                        let rhs = eval_expr(&sub_expressions[1]);
+                        let x = match lhs {
+                            Value::Number(m) | Value::PosNumber(m) => m,
+                            _ => panic!("left-hand side is not a number! lhs: {:?}", sub_expressions[0])
+                        };
+                        let y = match rhs {
+                            Value::PosNumber(m) => m,
+                            _ => panic!("right-hand side is not a positive number! rhs: {:?}", sub_expressions[1])
+                        };
+                        Value::Measurement(Measurement::new(x, y))
+                    }
+                },
+                _ => todo!()
+            }
+        }
+    }
+}
+
+pub fn eval(input: &str) -> Value {
+    let s = expr(input);
+    eval_expr(&s)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -119,5 +201,68 @@ mod tests {
     fn test_negative() {
         let s = expr("-1.0 ± 2.0");
         assert_eq!(s.to_string(), "(± (- 1.0) 2.0)");
+    }
+    #[test]
+    fn test_eval_simple() {
+        let s = expr("1 + 2");
+        assert_eq!(s.to_string(), "(+ 1 2)");
+        let val = eval_expr(&s);
+        match val {
+            Value::PosNumber(x) => assert_eq!(x, 3.0),
+            _ => panic!("Error")
+        }
+    }
+    #[test]
+    fn test_eval_measurement() {
+        let s = expr("1.0 ± 2.0");
+        assert_eq!(s.to_string(), "(± 1.0 2.0)");
+        let val = eval_expr(&s);
+        match val {
+            Value::Measurement(m) => assert_eq!(m, Measurement::new(1.0, 2.0)),
+            _ => panic!("Error")
+        }
+    }
+    #[test]
+    fn test_eval_measurement_add() {
+        let s = expr("1.0 ± 0.01 + 1.7 ± 0.02");
+        assert_eq!(s.to_string(), "(+ (± 1.0 0.01) (± 1.7 0.02))");
+        let val = eval_expr(&s);
+        match val {
+            
+            Value::Measurement(m) => {
+                let actual_value = Measurement::new(1.0, 0.01) + Measurement::new(1.7, 0.02);
+                assert_eq!(m,  actual_value)
+            },
+            _ => panic!("Error")
+        }
+    }
+
+    #[test]
+    fn test_eval_measurement_div() {
+        let s = expr("1.0 ± 0.01 / 1.7 ± 0.02");
+        assert_eq!(s.to_string(), "(/ (± 1.0 0.01) (± 1.7 0.02))");
+        let val = eval_expr(&s);
+        match val {
+            
+            Value::Measurement(m) => {
+                let actual_value = Measurement::new(1.0, 0.01) / Measurement::new(1.7, 0.02);
+                assert_eq!(m,  actual_value)
+            },
+            _ => panic!("Error")
+        }
+    }
+    #[test]
+    fn test_eval_measurement_mul() {
+        let s = expr("1.0 ± 0.01 * 1.7 ± 0.02");
+        assert_eq!(s.to_string(), "(* (± 1.0 0.01) (± 1.7 0.02))");
+        let val = eval_expr(&s);
+        match val {
+            
+            Value::Measurement(m) => {
+                let actual_value = Measurement::new(1.0, 0.01) * Measurement::new(1.7, 0.02);
+                assert_eq!(m,  actual_value)
+            },
+            _ => panic!("Error")
+        }
     }
 }
