@@ -25,6 +25,9 @@ Read the tree structure of the expression and *fold* it, reducing it into it's f
 
 ## Miscellaneous
 - Add support for numeric constants with no uncertainty, such as `42`, `e`, `π`, etc
+  - [x] Numeric literals
+  - [x] `e`
+  - [x] `π`
 - Add support for digraphs(e.g 'pi' for `π` and '+-' for `+-`)
 
 
