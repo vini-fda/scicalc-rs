@@ -1,6 +1,6 @@
 use float_cmp::{ApproxEq, F64Margin};
 use std::fmt;
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub, Neg};
 
 /**A Measurement 'x' is written as x = (mean +- sigma)
 
@@ -19,6 +19,17 @@ impl Measurement {
     }
 }
 
+impl Neg for Measurement {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Self {
+            mean: -self.mean,
+            sigma: self.sigma,
+        }
+    }
+}
+
 impl Add for Measurement {
     type Output = Self;
 
@@ -30,6 +41,17 @@ impl Add for Measurement {
     }
 }
 
+impl Add<f64> for Measurement {
+    type Output = Self;
+
+    fn add(self, other: f64) -> Self {
+        Self {
+            mean: self.mean + other,
+            sigma: self.sigma,
+        }
+    }
+}
+
 impl Sub for Measurement {
     type Output = Self;
 
@@ -37,6 +59,17 @@ impl Sub for Measurement {
         Self {
             mean: self.mean - other.mean,
             sigma: quadrature(self.sigma, other.sigma).sqrt(),
+        }
+    }
+}
+
+impl Sub<f64> for Measurement {
+    type Output = Self;
+
+    fn sub(self, other: f64) -> Self {
+        Self {
+            mean: self.mean - other,
+            sigma: self.sigma,
         }
     }
 }
@@ -53,6 +86,17 @@ impl Mul for Measurement {
     }
 }
 
+impl Mul<f64> for Measurement {
+    type Output = Self;
+
+    fn mul(self, other: f64) -> Self {
+        Self {
+            mean: self.mean * other,
+            sigma: self.sigma * other,
+        }
+    }
+}
+
 impl Div for Measurement {
     type Output = Self;
 
@@ -61,6 +105,17 @@ impl Div for Measurement {
         Self {
             mean: new_mean,
             sigma: quadrature(self.sigma / self.mean, other.sigma / other.mean).sqrt() * new_mean,
+        }
+    }
+}
+
+impl Div<f64> for Measurement {
+    type Output = Self;
+
+    fn div(self, other: f64) -> Self {
+        Self {
+            mean: self.mean / other,
+            sigma: self.sigma / other,
         }
     }
 }
