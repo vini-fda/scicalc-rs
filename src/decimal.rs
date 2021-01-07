@@ -60,6 +60,7 @@ impl fmt::Display for DecimalNumber {
     }
 }
 
+//TODO: use sig figs
 fn sig_figs(number: &str) -> usize {
     let d = DecimalNumber::new(number);
     sig_figs_helper(&d)
