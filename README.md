@@ -12,7 +12,7 @@ Transform a string(i.e. the input as a sequence of characters) into a sequence o
 Read a sequence of tokens — which has a linear structure — and transform it into a **tree** structure.
 
 ## Evaluating
-Read the tree structure of the expression and fold, or evaluate, it's value.
+Read the tree structure of the expression and *fold* it, reducing it into it's final value.
 
 ## Calculator
 - Parse and perform basic operations with measurements
