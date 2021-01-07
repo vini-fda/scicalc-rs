@@ -1,10 +1,8 @@
 [package]
 name = "scicalc-rs"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["vini-fda"]
 edition = "2018"
 
 [dependencies]
 float-cmp = "0.8.0"        # Floating point approximate comparison traits
-regex = "1.4.2"
-lazy_static = "1.4.0"
