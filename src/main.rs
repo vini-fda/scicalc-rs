@@ -1,9 +1,16 @@
-use scicalc_rs::measurement::Measurement;
-fn main() {
-    let height: Measurement = Measurement::new(1.75, 0.01);
-    let increment = Measurement::new(0.5, 0.001);
+use std::panic;
 
-    println!("Height: {}", height);
-    println!("Increment: {}", increment);
-    println!("New height: {}", increment - height);
+use scicalc_rs::parser::eval;
+fn main() {
+    panic::set_hook(Box::new(|_info| {
+        // do nothing
+        //TODO: Add proper error handling
+    }));
+    let result = panic::catch_unwind(|| {
+        eval("(1.0 ± 0.1) * (3.0 ± 0.1)")
+    });
+    match result {
+        Ok(res) => println!("{}", res),
+        Err(_) => println!("ERROR"),
+    }
 }
