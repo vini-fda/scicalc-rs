@@ -1,3 +1,5 @@
+use std::fmt;
+
 ///Stores the integral/integer and fractional parts of a number
 ///written in decimal representation as strings.
 ///
@@ -29,7 +31,12 @@ impl DecimalNumber {
         }
     }
     pub fn full_number(&self) -> String {
-        format!("{}.{}", self.integral, self.fractional)
+        if self.fractional == "" {
+            format!("{}", self.integral)
+        } else {
+            format!("{}.{}", self.integral, self.fractional)
+        }
+        
     }
     ///Returns the number of significant figures of the DecimalNumber
     ///
@@ -44,6 +51,12 @@ impl DecimalNumber {
     }
     pub fn as_float(&self) -> f64 {
         self.full_number().as_str().parse::<f64>().unwrap()
+    }
+}
+
+impl fmt::Display for DecimalNumber {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.full_number())
     }
 }
 
