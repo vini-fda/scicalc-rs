@@ -8,14 +8,19 @@ Rust crate for parsing and doing calculations with measurements, typically used 
 ## Lexing [OK]
 Transform a string(i.e. the input as a sequence of characters) into a sequence of *tokens*, which can then be fed into the *parser*.
 
-## Parsing [WIP]
+## Parsing [OK]
 Read a sequence of tokens — which has a linear structure — and transform it into a **tree** structure.
 
-## Evaluating [WIP]
+## Evaluating [OK]
 Read the tree structure of the expression and *fold* it, reducing it into it's final value.
 
+## Proper error handling [WIP]
+`don't panic!`
+
+Instead of `panic!`ing, it'd better if the evaluator and the parser returned a `Result<...>`
+
 ## Calculator
-- Parse and perform basic operations with measurements
+- Parse and perform basic operations with measurements (**DONE**)
   - For example, addition `(23.0 ± 0.1) + (1.5 ± 0.5)`
 - Add support for exponentiation, logarithms, squareroots, n-th roots and many other functions
 
