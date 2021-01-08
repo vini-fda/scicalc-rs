@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Vinicius <vinifreitas.d.a@gmail.com>"]
 edition = "2018"
 description = "Crate for parsing and doing calculations with measurements, typically used in scientific contexts."
+repository = "https://github.com/vini-fda/scicalc-rs"
+readme = "README.md"
 license = "MIT"
 
 [dependencies]
