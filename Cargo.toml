@@ -1,8 +1,10 @@
 [package]
 name = "scicalc-rs"
 version = "0.1.0"
-authors = ["vini-fda"]
+authors = ["Vinicius <vinifreitas.d.a@gmail.com>"]
 edition = "2018"
+description = "Crate for parsing and doing calculations with measurements, typically used in scientific contexts."
+license = "MIT"
 
 [dependencies]
 float-cmp = "0.8.0"        # Floating point approximate comparison traits
