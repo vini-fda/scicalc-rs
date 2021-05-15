@@ -11,7 +11,6 @@ fn main() {
         //TODO: Add proper error handling
     }));
 
-
     let args: Vec<String> = env::args().collect();
     if args.len() <= 1 {
         println!("Error: Not enough args.");
