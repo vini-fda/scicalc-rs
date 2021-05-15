@@ -17,6 +17,7 @@ pub enum Token {
     Minus, //'-'  NOTE: could be prefix 'minus' or the infix subtraction operator
     Mul,   //'*'
     Div,   //'/'
+    Caret, //'^'
 
     //Grouping
     LeftParen,  // '('
@@ -25,7 +26,6 @@ pub enum Token {
     //End-of-file
     Eof,
 }
-
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -38,6 +38,7 @@ impl fmt::Display for Token {
             Token::Minus => write!(f, "-"),
             Token::Mul => write!(f, "*"),
             Token::Div => write!(f, "/"),
+            Token::Caret => write!(f, "^"),
             Token::LeftParen => write!(f, "("),
             Token::RightParen => write!(f, ")"),
             Token::Eof => write!(f, "EOF"), //useful for debugging
