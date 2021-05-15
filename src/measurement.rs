@@ -1,6 +1,6 @@
 use float_cmp::{ApproxEq, F64Margin};
 use std::fmt;
-use std::ops::{Add, Div, Mul, Sub, Neg};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /**A Measurement 'x' is written as x = (mean +- sigma)
 
@@ -9,8 +9,8 @@ where 'mean' is the mean value
 and 'sigma' is the uncertainty(also called error or standard deviation from the mean)*/
 #[derive(Debug, Clone, Copy)]
 pub struct Measurement {
-    mean: f64,  //mean value
-    sigma: f64, //std deviation, error or uncertainty
+    pub mean: f64,  //mean value
+    pub sigma: f64, //std deviation, error or uncertainty
 }
 
 impl Measurement {
@@ -141,6 +141,27 @@ impl ApproxEq for Measurement {
     }
 }
 
+impl From<f64> for Measurement {
+    fn from(x: f64) -> Self {
+        Measurement {
+            mean: x,
+            sigma: 0.0,
+        }
+    }
+}
+
+pub fn pow(x: Measurement, y: Measurement) -> Measurement {
+    //x^y
+    let [xm, ym, sx, sy] = [x.mean, y.mean, x.sigma, y.sigma];
+    let dfdx = ym * xm.powf(ym - 1.0);
+    let dfdy = xm.ln() * xm.powf(ym);
+
+    Measurement {
+        mean: xm.powf(ym),
+        sigma: quadrature(dfdx * sx, dfdy * sy).sqrt(),
+    }
+}
+
 fn quadrature(x: f64, y: f64) -> f64 {
     x * x + y * y
 }
@@ -176,5 +197,26 @@ mod tests {
         assert_eq!(false, x.approx_eq(y, F64Margin::default()));
         //x and x_prime should be equal
         assert!(x.approx_eq(x_prime, F64Margin::default()));
+    }
+    #[test]
+    fn simple_pow() {
+        let x = Measurement::from(2.0);
+        let y = Measurement::from(3.0);
+        let r = Measurement {
+            mean: 8.0,
+            sigma: 0.0,
+        };
+        assert_eq!(pow(x, y), r);
+    }
+
+    #[test]
+    fn negative_pow() {
+        let x = Measurement::from(2.0);
+        let y = Measurement::from(-3.0);
+        let r = Measurement {
+            mean: 1.0 / 8.0,
+            sigma: 0.0,
+        };
+        assert_eq!(pow(x, y), r);
     }
 }
