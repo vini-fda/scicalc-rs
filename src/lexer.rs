@@ -22,6 +22,7 @@ impl<'a> Scanner<'_> {
         self.characters.peek().copied()
     }
 }
+
 pub struct Lexer {
     tokens: Vec<Token>,
 }
@@ -47,10 +48,25 @@ impl Lexer {
             };
 
             let opt_token: Option<Token> = match c {
-                '+' => Some(Token::Add),
+                '+' => {
+                    let opt_next_c = scanner.peek();
+                    match opt_next_c {
+                        Some(val) => {
+                            //Detect the digraph '+-' as '±'
+                            if val == '-' {
+                                scanner.next();
+                                Some(Token::PlusMinus)
+                            } else {
+                                Some(Token::Add)
+                            }
+                        }
+                        None => Some(Token::Add),
+                    }
+                }
                 '-' => Some(Token::Minus),
                 '*' => Some(Token::Mul),
                 '/' => Some(Token::Div),
+                '^' => Some(Token::Caret),
                 '±' => Some(Token::PlusMinus),
                 'e' => Some(Token::EulersNum),
                 'π' => Some(Token::Pi),
@@ -166,6 +182,15 @@ mod tests {
     #[test]
     fn test_simple_plus_minus() {
         let mut lex = Lexer::new("2.3 ± 3.3");
+        num_eq("2.3", lex.next());
+        assert_eq!(Token::PlusMinus, lex.next());
+        num_eq("3.3", lex.next());
+        assert_eq!(Token::Eof, lex.next());
+    }
+
+    #[test]
+    fn test_digraph_plus_minus() {
+        let mut lex = Lexer::new("2.3 +- 3.3");
         num_eq("2.3", lex.next());
         assert_eq!(Token::PlusMinus, lex.next());
         num_eq("3.3", lex.next());
