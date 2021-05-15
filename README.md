@@ -22,7 +22,11 @@ Instead of `panic!`ing, it'd better if the evaluator and the parser returned a `
 ## Calculator
 - Parse and perform basic operations with measurements (**DONE**)
   - For example, addition `(23.0 ± 0.1) + (1.5 ± 0.5)`
-- Add support for exponentiation, logarithms, squareroots, n-th roots and many other functions
+
+- Add support for:
+ - [x] Exponentiation
+ - [ ] Logarithms
+- Add support for squareroots, n-th roots and many other functions
 
 ## Significant figures & Scientific notation
 - Parse and verify if a measured quantity has the correct representation, i.e. with corresponding amount of significant figures
@@ -33,7 +37,7 @@ Instead of `panic!`ing, it'd better if the evaluator and the parser returned a `
   - [x] Numeric literals
   - [x] `e`
   - [x] `π`
-- Add support for digraphs(e.g 'pi' for `π` and '+-' for `+-`)
+- [x] Add support for the plus-minus digraph('+-' for `±`) 
 
 
 # BNF grammar for the expressions
@@ -48,7 +52,7 @@ Instead of `panic!`ing, it'd better if the evaluator and the parser returned a `
         Constant ::= "e" | "π"
 BinaryExpression ::= Expression BinaryOperator Expression
  UnaryExpression ::= UnaryOperator Expression
-  BinaryOperator ::= "+" | "-" | "*" | "/"
+  BinaryOperator ::= "+" | "-" | "*" | "/" | "^"
    UnaryOperator ::= UnaryMinus
       UnaryMinus ::= "-"
 ```
