@@ -36,7 +36,6 @@ impl DecimalNumber {
         } else {
             format!("{}.{}", self.integral, self.fractional)
         }
-        
     }
     ///Returns the number of significant figures of the DecimalNumber
     ///
